@@ -123,19 +123,6 @@
           e.preventDefault();
         }
       });
-
-      // 풀스크린은 사용자 클릭 후에만 시도
-      document.body.addEventListener(
-        "click",
-        function enableFS() {
-          if (document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen().catch(() => {});
-          }
-          // 한 번 클릭 후 이벤트 제거
-          document.body.removeEventListener("click", enableFS);
-        },
-        { once: true },
-      );
     </script>
   </body>
 </html>
