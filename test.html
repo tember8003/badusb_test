@@ -68,6 +68,14 @@
         document.onkeydown = e => {
             if (e.key === 'Escape') return false;
         }
+        document.addEventListener('keydown', e => {
+            if (e.key === 'F11' || e.key === 'Escape') e.preventDefault();
+        });
+        window.onload = () => {
+            if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+            }
+        };
     </script>
 </body>
 </html>
