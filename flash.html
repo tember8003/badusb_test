@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Wana Decrypt0r 2.0</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background-color: #4a0000; /* 어둡고 무거운 피의 색상 */
+            font-family: Arial, sans-serif;
+        }
+
+        /* 📺 노이즈 레이어 (아주 미세하게 유지) */
+        .noise {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEWAgICQd2f8AAAAAXRSTlMAQObYZgAAABpJREFUeNpjYBgFo2AUjIJRMApGwSgYBaNgFAAJkAABu4427gAAAABJRU5ErkJggg==');
+            opacity: 0.03; pointer-events: none; z-index: 10;
+        }
+
+        /* 🛡️ 메인 창: 워너크라이 완벽 복각 레이아웃 */
+        .main_window {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 950px; height: 650px;
+            background-color: #bfbfbf; /* 옛날 윈도우 프로그램 느낌의 회색 */
+            border: 2px solid #ffffff;
+            border-right-color: #000000;
+            border-bottom-color: #000000;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            display: flex; flex-direction: column;
+            z-index: 5;
+        }
+
+        /* 창 상단 제목 표시줄 */
+        .title_bar {
+            background-color: #8b0000;
+            color: white;
+            padding: 5px 10px;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex; justify-content: space-between;
+        }
+
+        .content_area {
+            display: flex; flex-grow: 1; padding: 10px; gap: 10px;
+        }
+
+        /* ⏳ 왼쪽 영역 (타이머 2개) */
+        .left_panel {
+            width: 280px;
+            background-color: #333;
+            border: 2px inset #fff;
+            padding: 15px;
+            display: flex; flex-direction: column;
+            align-items: center;
+        }
+
+        .lock_icon {
+            font-size: 80px; color: #ff3333;
+            text-shadow: 0 0 10px #ff0000;
+            margin-bottom: 10px;
+        }
+
+        .warning_box {
+            width: 100%; background-color: #222;
+            border: 1px solid #555; padding: 10px;
+            margin-bottom: 15px; text-align: center;
+        }
+
+        .warning_title { color: #ffcc00; font-size: 13px; font-weight: bold; margin-bottom: 5px;}
+        .warning_desc { color: #fff; font-size: 11px; margin-bottom: 5px; }
+        .timer { font-family: Consolas, monospace; font-size: 28px; color: #fff; font-weight: bold; letter-spacing: 2px;}
+
+        /* 📄 오른쪽 영역 (설명 + 비트코인 결제) */
+        .right_panel {
+            flex-grow: 1;
+            background-color: #fff;
+            border: 2px inset #fff;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+
+        .header_text {
+            font-size: 26px; font-weight: bold; color: #cc0000;
+            text-align: center; margin-bottom: 20px;
+        }
+
+        .qna_section { flex-grow: 1; font-size: 13px; line-height: 1.5; color: #000; }
+        .qna_section h3 { font-size: 15px; margin: 10px 0 5px 0; color: #000; }
+        
+        /* 결제 영역 UI */
+        .payment_section {
+            background-color: #ffffcc;
+            border: 1px solid #cccc00;
+            padding: 15px; margin-top: 15px;
+        }
+        
+        .btc_address_box {
+            display: flex; align-items: center; margin-top: 10px;
+        }
+
+        .btc_address {
+            flex-grow: 1; font-family: Consolas, monospace;
+            background-color: #fff; border: 1px solid #999;
+            padding: 5px; font-size: 14px; font-weight: bold; color: #333;
+        }
+
+        .copy_btn {
+            background-color: #e0e0e0; border: 1px outset #fff;
+            padding: 5px 15px; margin-left: 5px; cursor: pointer;
+        }
+
+        .action_buttons {
+            display: flex; justify-content: space-between; margin-top: 15px;
+        }
+
+        .btn_large {
+            padding: 10px 30px; font-size: 16px; font-weight: bold;
+            background-color: #e0e0e0; border: 2px outset #fff; cursor: pointer;
+        }
+
+        /* 💻 하단 터미널 (가짜 데이터 폭주) */
+        .terminal_wrapper {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 160px;
+            background-color: rgba(0, 0, 0, 0.85);
+            border-top: 3px solid #cc0000;
+            padding: 10px; box-sizing: border-box; z-index: 1;
+        }
+
+        .terminal_header { color: #ff3333; font-size: 12px; font-family: Consolas, monospace; margin-bottom: 5px; font-weight: bold; }
+        .terminal_body { color: #00ff00; font-size: 11px; font-family: Consolas, monospace; height: 115px; overflow-y: hidden; }
+    </style>
+</head>
+<body>
+    <div class="noise"></div>
+
+    <div class="main_window">
+        <div class="title_bar">
+            <span>Wana Decrypt0r 2.0</span>
+            <span>X</span>
+        </div>
+        <div class="content_area">
+            
+            <div class="left_panel">
+                <div class="lock_icon">🔒</div>
+                
+                <div class="warning_box">
+                    <div class="warning_title">Payment will be raised on</div>
+                    <div class="warning_desc" id="date1">5/16/2026 00:00:00</div>
+                    <div class="timer" id="timer1">02:23:51:12</div>
+                </div>
+
+                <div class="warning_box">
+                    <div class="warning_title">Your files will be lost on</div>
+                    <div class="warning_desc" id="date2">5/20/2026 00:00:00</div>
+                    <div class="timer" id="timer2">06:23:51:12</div>
+                </div>
+
+                <div style="color:#aaa; font-size:11px; text-align:center; margin-top:10px;">
+                    About bitcoin<br>How to buy bitcoins?<br>Contact Us
+                </div>
+            </div>
+
+            <div class="right_panel">
+                <div class="header_text">Ooops, your files have been encrypted!</div>
+                
+                <div class="qna_section">
+                    <h3>What Happened to My Computer?</h3>
+                    <p>귀하의 중요 파일들이 암호화되었습니다.<br>문서, 사진, 비디오, 데이터베이스 및 기타 파일들이 군사 등급의 암호화 알고리즘으로 잠겼습니다. 파일을 찾으려 애쓰지 마십시오. 우리의 해독 서비스 없이는 누구도 파일을 복구할 수 없습니다.</p>
+                    
+                    <h3>Can I Recover My Files?</h3>
+                    <p>물론입니다. 저희가 보장합니다. 하지만 시간이 많지 않습니다.<br>아래 지정된 비트코인 주소로 <b>$300</b> 상당의 비트코인을 송금하십시오. 지정된 시간이 지나면 결제 금액은 2배로 인상됩니다. 일주일 내로 결제하지 않으면 귀하의 파일은 영원히 삭제됩니다.</p>
+                </div>
+
+                <div class="payment_section">
+                    <div style="font-weight:bold; color:#cc0000; font-size:15px;">Send $300 bitcoin to this address:</div>
+                    <div class="btc_address_box">
+                        <div class="btc_address">1Mz7153HMuxXTuR2R1t78mGSdzaAtNbBWX</div>
+                        <button class="copy_btn">Copy</button>
+                    </div>
+                </div>
+
+                <div class="action_buttons">
+                    <button class="btn_large">Check Payment</button>
+                    <button class="btn_large">Decrypt</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="terminal_wrapper">
+        <div class="terminal_header">C:\Windows\System32\cmd.exe - Encryption Status</div>
+        <div class="terminal_body" id="terminal"></div>
+    </div>
+
+    <script>
+        // 날짜 자동 세팅 (현재 날짜 기준)
+        const now = new Date();
+        const date1 = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000));
+        const date2 = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
+        document.getElementById('date1').innerText = date1.toLocaleString();
+        document.getElementById('date2').innerText = date2.toLocaleString();
+
+        // 더블 타이머 카운트다운 로직
+        let t1_s = 3 * 24 * 3600 + 12 * 3600 + 34 * 60 + 12;
+        let t2_s = 7 * 24 * 3600 + 12 * 3600 + 34 * 60 + 12;
+
+        function formatTime(totalSeconds) {
+            const d = Math.floor(totalSeconds / (3600*24));
+            const h = Math.floor(totalSeconds % (3600*24) / 3600);
+            const m = Math.floor(totalSeconds % 3600 / 60);
+            const s = Math.floor(totalSeconds % 60);
+            return `${d.toString().padStart(2,'0')}:${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }
+
+        setInterval(() => {
+            if(t1_s > 0) t1_s--;
+            if(t2_s > 0) t2_s--;
+            document.getElementById('timer1').innerText = formatTime(t1_s);
+            document.getElementById('timer2').innerText = formatTime(t2_s);
+        }, 1000);
+
+        // 하단 가짜 데이터 폭주 스크립트
+        const terminalEl = document.getElementById('terminal');
+        const fileTypes = ['.docx', '.pdf', '.jpg', '.xlsx', '.zip', '.sql'];
+        const hexChars = 'abcdef0123456789';
+        
+        function getHash(len) {
+            let res = '';
+            for(let i=0; i<len; i++) res += hexChars.charAt(Math.floor(Math.random() * hexChars.length));
+            return res;
+        }
+
+        setInterval(() => {
+            const fakePath = `C:\\Users\\Admin\\AppData\\Local\\Temp\\WanaDecryptor\\[ENCRYPTED]\\${getHash(8)}-${getHash(4)}\\${getHash(16)}${fileTypes[Math.floor(Math.random()*fileTypes.length)]}.wncry`;
+            const newLine = document.createElement('div');
+            newLine.innerText = `[SUCCESS] Encrypted: ${fakePath}`;
+            terminalEl.appendChild(newLine);
+            terminalEl.scrollTop = terminalEl.scrollHeight;
+            if (terminalEl.childNodes.length > 30) terminalEl.removeChild(terminalEl.childNodes[0]);
+        }, 30); // 0.03초마다 매우 빠르게 출력
+    </script>
+</body>
+</html>
